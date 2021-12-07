@@ -98,8 +98,19 @@ bool JointTrajectoryInterface::init(SmplMsgConnection* connection, const std::ve
   connection_->makeConnect();
 
   // try to read velocity limits from URDF, if none specified
-  if (joint_vel_limits_.empty() && !industrial_utils::param::getJointVelocityLimits("robot_description", joint_vel_limits_))
+  if (joint_vel_limits_.empty() && !industrial_utils::param::getJointVelocityLimits("robot_description", joint_vel_limits_)) {
     ROS_WARN("Unable to read velocity limits from 'robot_description' param.  Velocity validation disabled.");
+    
+    ROS_WARN("Added Velocity Limits: [3.1415, 3.1415, 3.4906, 6.1086, 6.1086, 6.9813]");
+
+    // Set Joint Velocity Limits
+    std::vector<double> velocity = {3.1415, 3.1415, 3.4906, 6.1086, 6.1086, 6.9813};
+    std::vector<std::string> names = {"joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"};
+
+    // Map Joint Names - Velocity Limits
+    for (unsigned int i = 0; i < velocity.size(); i++) {joint_vel_limits_.insert(std::pair<std::string,double>(names[i],velocity[i]));}
+  
+  }
 
   this->srv_stop_motion_ = this->node_.advertiseService("stop_motion", &JointTrajectoryInterface::stopMotionCB, this);
   this->srv_joint_trajectory_ = this->node_.advertiseService("joint_path_command", &JointTrajectoryInterface::jointTrajectoryCB, this);
@@ -173,6 +184,9 @@ bool JointTrajectoryInterface::trajectory_to_msgs(const trajectory_msgs::JointTr
     // reduce velocity to a single scalar, for robot command
     if (!calc_speed(xform_pt, &vel, &duration))
       return false;
+    
+    // FIXME: vel è la velocità che legge Samuele !! come la settiamo da service in modo decente ?
+    vel = 0.2;
 
     JointTrajPtMessage msg = create_message(i, xform_pt.positions, vel, duration);
     msgs->push_back(msg);
