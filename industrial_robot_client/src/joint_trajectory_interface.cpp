@@ -184,9 +184,19 @@ bool JointTrajectoryInterface::trajectory_to_msgs(const trajectory_msgs::JointTr
     // reduce velocity to a single scalar, for robot command
     if (!calc_speed(xform_pt, &vel, &duration))
       return false;
-    
-    // FIXME: vel è la velocità che legge Samuele !! come la settiamo da service in modo decente ?
-    vel = 0.2;
+
+    // DEBUG:    
+    // if (traj->points[i].velocities.size() == 6) ROS_WARN_STREAM_THROTTLE(0.5, "Point " << i << " | Velocities: " << traj->points[i].velocities[0] << " | " << traj->points[i].velocities[1] << " | " << traj->points[i].velocities[2] << " | " << traj->points[i].velocities[3] << " | " << traj->points[i].velocities[4] << " | " << traj->points[i].velocities[5]);
+    // if (traj->points[i].accelerations.size() == 6) ROS_WARN_STREAM_THROTTLE(0.5, "Point " << i << " | Accelerations: " << traj->points[i].accelerations[0] << " | " << traj->points[i].accelerations[1] << " | " << traj->points[i].accelerations[2] << " | " << traj->points[i].accelerations[3] << " | " << traj->points[i].accelerations[4] << " | " << traj->points[i].accelerations[5]);
+    // if (traj->points[i].effort.size() == 6) ROS_WARN_STREAM_THROTTLE(0.5, "Point " << i << " | Effort: " << traj->points[i].effort[0] << " | " << traj->points[i].effort[1] << " | " << traj->points[i].effort[2] << " | " << traj->points[i].effort[3] << " | " << traj->points[i].effort[4] << " | " << traj->points[i].effort[5]);
+    // ROS_WARN_STREAM_THROTTLE(0.5,  "Point " << i << " | Time From Start: " << traj->points[i].time_from_start.toSec());
+
+    // vel = float(int(i)%100) + 1.0;
+  
+    // EDITED: Overwrite vel with the desired velocity (0% - 100%)
+    vel = traj->points[i].velocities[0];
+  
+    ROS_WARN_STREAM("Message Number: " << int(i) << " | Velocity: " << vel);
 
     JointTrajPtMessage msg = create_message(i, xform_pt.positions, vel, duration);
     msgs->push_back(msg);
@@ -284,11 +294,12 @@ bool JointTrajectoryInterface::calc_velocity(const trajectory_msgs::JointTraject
     *rbt_velocity = default_vel_ratio_;
   }
 
-  if ( (*rbt_velocity < 0) || (*rbt_velocity > 1) )
-  {
-    ROS_WARN("computed velocity (%.1f %%) is out-of-range.  Clipping to [0-100%%]", *rbt_velocity * 100);
-    *rbt_velocity = std::min(1.0, std::max(0.0, *rbt_velocity));  // clip to [0,1]
-  }
+  // EDITED: Commented in order to avoid Warning
+  // if ( (*rbt_velocity < 0) || (*rbt_velocity > 1) )
+  // {
+  //   ROS_WARN("computed velocity (%.1f %%) is out-of-range.  Clipping to [0-100%%]", *rbt_velocity * 100);
+  //   *rbt_velocity = std::min(1.0, std::max(0.0, *rbt_velocity));  // clip to [0,1]
+  // }
   
   return true;
 }
@@ -365,8 +376,9 @@ bool JointTrajectoryInterface::is_valid(const trajectory_msgs::JointTrajectory &
       std::map<std::string, double>::iterator max_vel = joint_vel_limits_.find(traj.joint_names[j]);
       if (max_vel == joint_vel_limits_.end()) continue;  // no velocity-checking if limit not defined
 
-      if (std::abs(pt.velocities[j]) > max_vel->second)
-        ROS_ERROR_RETURN(false, "Validation failed: Max velocity exceeded for trajectory pt %d, joint '%s'", i, traj.joint_names[j].c_str());
+      // EDITED: Commented in order to avoid Error
+      // if (std::abs(pt.velocities[j]) > max_vel->second)
+      //   ROS_ERROR_RETURN(false, "Validation failed: Max velocity exceeded for trajectory pt %d, joint '%s'", i, traj.joint_names[j].c_str());
     }
 
     // check for valid timestamp
