@@ -195,7 +195,10 @@ bool JointTrajectoryInterface::trajectory_to_msgs(const trajectory_msgs::JointTr
   
     // EDITED: Overwrite vel with the desired velocity (0% - 100%)
     vel = traj->points[i].velocities[0];
-  
+
+    // EDITED: Overwrite duration with the desired time_from_start -> Used to set payload
+    duration = traj->points[i].time_from_start.toSec();
+    
     ROS_WARN_STREAM("Message Number: " << int(i) << " | Velocity: " << vel);
 
     JointTrajPtMessage msg = create_message(i, xform_pt.positions, vel, duration);
